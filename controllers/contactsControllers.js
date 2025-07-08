@@ -6,7 +6,7 @@ import {
   updateContact,
 } from "../services/contactsServices.js";
 
-import { HttpError } from "../helpers/HttpError.js";
+import HttpError from "../helpers/HttpError.js";
 
 // GET /api/contacts
 export const getAllContacts = async (req, res, next) => {
