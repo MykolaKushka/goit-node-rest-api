@@ -1,79 +1,76 @@
 import {
   listContacts,
   getContactById,
-  removeContact,
   addContact,
+  removeContact,
   updateContact,
+  updateStatusContact,
 } from "../services/contactsServices.js";
-
 import HttpError from "../helpers/HttpError.js";
 
-// GET /api/contacts
-export const getAllContacts = async (req, res, next) => {
+export const getAllContacts = async (_, res, next) => {
   try {
-    const contacts = await listContacts();
-    res.status(200).json(contacts);
+    const result = await listContacts();
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }
 };
 
-// GET /api/contacts/:id
-export const getContactByIdCtrl = async (req, res, next) => {
+export const getOneContact = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const contact = await getContactById(id);
-    if (!contact) {
-      throw HttpError(404, "Not found");
-    }
-    res.status(200).json(contact);
+    const result = await getContactById(id);
+    if (!result) throw HttpError(404, "Not found");
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }
 };
 
-// DELETE /api/contacts/:id
+export const createContact = async (req, res, next) => {
+  try {
+    const result = await addContact(req.body);
+    res.status(201).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const deleteContact = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const contact = await removeContact(id);
-    if (!contact) {
-      throw HttpError(404, "Not found");
-    }
-    res.status(200).json(contact);
+    const result = await removeContact(id);
+    if (!result) throw HttpError(404, "Not found");
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }
 };
 
-// POST /api/contacts
-export const createContact = async (req, res, next) => {
-  try {
-    const { name, email, phone } = req.body;
-    const newContact = await addContact(name, email, phone);
-    res.status(201).json(newContact);
-  } catch (error) {
-    next(error);
-  }
-};
-
-// PUT /api/contacts/:id
 export const updateContactById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
-
-    if (!Object.keys(updates).length) {
+    if (Object.keys(req.body).length === 0) {
       throw HttpError(400, "Body must have at least one field");
     }
+    const result = await updateContact(id, req.body);
+    if (!result) throw HttpError(404, "Not found");
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
 
-    const updatedContact = await updateContact(id, updates);
-
-    if (!updatedContact) {
-      throw HttpError(404, "Not found");
+export const updateFavorite = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!("favorite" in req.body)) {
+      throw HttpError(400, "Missing field favorite");
     }
-
-    res.status(200).json(updatedContact);
+    const result = await updateStatusContact(id, req.body);
+    if (!result) throw HttpError(404, "Not found");
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }
