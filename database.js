@@ -1,6 +1,5 @@
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
-import defineContact from "./models/contact.js"; 
 
 dotenv.config();
 
@@ -24,13 +23,12 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
   },
 });
 
-const Contact = defineContact(sequelize); 
-
 try {
   await sequelize.authenticate();
-  await sequelize.sync();
+  console.log("Database connection successful");
 } catch (error) {
+  console.error("Database connection error:", error.message);
   process.exit(1);
 }
 
-export { sequelize, Contact };
+export default sequelize;
