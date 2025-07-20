@@ -1,5 +1,9 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import gravatar from "gravatar"; 
+import path from "path";
+import fs from "fs/promises";
+import { nanoid } from "nanoid";
 import User from "../models/user.js";
 import HttpError from "../helpers/HttpError.js";
 import dotenv from "dotenv";
@@ -7,6 +11,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const { JWT_SECRET = "defaultsecret" } = process.env;
+
+const avatarsDir = path.resolve("public", "avatars");
 
 export const register = async (req, res, next) => {
   try {
@@ -18,7 +24,13 @@ export const register = async (req, res, next) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ email, password: hashedPassword });
+    const avatarURL = gravatar.url(email, { s: "250", d: "retro" }, true);
+
+    const newUser = await User.create({
+      email,
+      password: hashedPassword,
+      avatarURL,
+    });
 
     res.status(201).json({
       user: {
@@ -76,6 +88,28 @@ export const getCurrent = async (req, res, next) => {
   try {
     const { email, subscription } = req.user;
     res.json({ email, subscription });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateAvatar = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      throw HttpError(400, "Avatar file is required");
+    }
+
+    const { path: tempPath, originalname } = req.file;
+    const ext = path.extname(originalname);
+    const fileName = `${nanoid()}${ext}`;
+    const newPath = path.join(avatarsDir, fileName);
+
+    await fs.rename(tempPath, newPath);
+
+    const avatarURL = `/avatars/${fileName}`;
+    await User.update({ avatarURL }, { where: { id: req.user.id } });
+
+    res.status(200).json({ avatarURL });
   } catch (error) {
     next(error);
   }

@@ -26,6 +26,7 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
 try {
   await sequelize.authenticate();
   console.log("Database connection successful");
+  await sequelize.sync({ alter: true });
 } catch (error) {
   console.error("Database connection error:", error.message);
   process.exit(1);
