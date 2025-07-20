@@ -1,81 +1,51 @@
-import Contact from "../models/contact.js";
-import HttpError from "../helpers/HttpError.js";
+import {
+  listContacts,
+  getContactById,
+  removeContact,
+  addContact,
+  updateContactById,
+  updateFavorite,
+} from "../services/contactsServices.js";
 
-export const getAllContacts = async (req, res, next) => {
-  try {
-    const contacts = await Contact.findAll({
-      where: { owner: req.user.id },
-    });
-    res.status(200).json(contacts);
-  } catch (error) {
-    next(error);
-  }
-};
+import ctrlWrapper from "../helpers/ctrlWrapper.js";
 
-export const getOneContact = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const contact = await Contact.findOne({ where: { id, owner: req.user.id } });
-    if (!contact) {
-      throw HttpError(404, "Not found");
-    }
-    res.status(200).json(contact);
-  } catch (error) {
-    next(error);
-  }
-};
+export const getAllContacts = ctrlWrapper(async (req, res) => {
+  const { id: owner } = req.user;
+  const contacts = await listContacts(owner);
+  res.json(contacts);
+});
 
-export const deleteContact = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const contact = await Contact.findOne({ where: { id, owner: req.user.id } });
-    if (!contact) {
-      throw HttpError(404, "Not found");
-    }
-    await contact.destroy();
-    res.status(200).json(contact);
-  } catch (error) {
-    next(error);
-  }
-};
+export const getOneContact = ctrlWrapper(async (req, res) => {
+  const { id } = req.params;
+  const { id: owner } = req.user;
+  const contact = await getContactById(id, owner);
+  res.json(contact);
+});
 
-export const createContact = async (req, res, next) => {
-  try {
-    const contact = await Contact.create({ ...req.body, owner: req.user.id });
-    res.status(201).json(contact);
-  } catch (error) {
-    next(error);
-  }
-};
+export const deleteContact = ctrlWrapper(async (req, res) => {
+  const { id } = req.params;
+  const { id: owner } = req.user;
+  const contact = await removeContact(id, owner);
+  res.json(contact);
+});
 
-export const updateContact = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const contact = await Contact.findOne({ where: { id, owner: req.user.id } });
-    if (!contact) {
-      throw HttpError(404, "Not found");
-    }
-    await contact.update(req.body);
-    res.status(200).json(contact);
-  } catch (error) {
-    next(error);
-  }
-};
+export const createContact = ctrlWrapper(async (req, res) => {
+  const { id: owner } = req.user;
+  const newContact = await addContact(req.body, owner);
+  res.status(201).json(newContact);
+});
 
-export const updateStatusContact = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { favorite } = req.body;
-    if (favorite === undefined) {
-      throw HttpError(400, "Missing field favorite");
-    }
-    const contact = await Contact.findOne({ where: { id, owner: req.user.id } });
-    if (!contact) {
-      throw HttpError(404, "Not found");
-    }
-    await contact.update({ favorite });
-    res.status(200).json(contact);
-  } catch (error) {
-    next(error);
-  }
-};
+export const updateContact = ctrlWrapper(async (req, res) => {
+  const { id } = req.params;
+  const { id: owner } = req.user;
+  const updatedContact = await updateContactById(id, req.body, owner);
+  res.json(updatedContact);
+});
+
+export const updateStatusContact = ctrlWrapper(async (req, res) => {
+  const { id } = req.params;
+  const { id: owner } = req.user;
+  const { favorite } = req.body;
+  const updatedContact = await updateFavorite(id, favorite, owner);
+  res.json(updatedContact);
+});

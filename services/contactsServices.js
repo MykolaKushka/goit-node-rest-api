@@ -1,34 +1,34 @@
-import { Contact } from "../database.js";
+import Contact from "../models/contact.js";
+import HttpError from "../helpers/HttpError.js";
 
-export const listContacts = async () => {
-  return await Contact.findAll();
+export const listContacts = async (owner) => {
+  return await Contact.findAll({ where: { owner } });
 };
 
-export const getContactById = async (contactId) => {
-  return await Contact.findByPk(contactId);
+export const getContactById = async (id, owner) => {
+  const contact = await Contact.findOne({ where: { id, owner } });
+  if (!contact) throw HttpError(404, "Not found");
+  return contact;
 };
 
-export const addContact = async ({ name, email, phone }) => {
-  return await Contact.create({ name, email, phone });
-};
-
-export const removeContact = async (contactId) => {
-  const contact = await Contact.findByPk(contactId);
-  if (!contact) return null;
+export const removeContact = async (id, owner) => {
+  const contact = await getContactById(id, owner);
   await contact.destroy();
   return contact;
 };
 
-export const updateContact = async (contactId, data) => {
-  const contact = await Contact.findByPk(contactId);
-  if (!contact) return null;
-  await contact.update(data);
+export const addContact = async (body, owner) => {
+  return await Contact.create({ ...body, owner });
+};
+
+export const updateContactById = async (id, body, owner) => {
+  const contact = await getContactById(id, owner);
+  await contact.update(body);
   return contact;
 };
 
-export const updateStatusContact = async (contactId, data) => {
-  const contact = await Contact.findByPk(contactId);
-  if (!contact) return null;
-  await contact.update(data);
+export const updateFavorite = async (id, favorite, owner) => {
+  const contact = await getContactById(id, owner);
+  await contact.update({ favorite });
   return contact;
 };
